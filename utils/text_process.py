@@ -47,13 +47,13 @@ def code_to_text(codes, dictionary):
     return paras
 
 
-def get_tokenlized(file):
-    tokenlized = list()
+def get_tokenized(file):
+    tokenized = list()
     with open(file) as raw:
         for text in raw:
             text = nltk.word_tokenize(text.lower()) # upper()? 这里改大写？
-            tokenlized.append(text)
-    return tokenlized
+            tokenized.append(text)
+    return tokenized
 
 
 def get_word_list(tokens):
@@ -75,11 +75,11 @@ def get_dict(word_set):
     return word_index_dict, index_word_dict
 
 def text_precess(train_text_loc, test_text_loc=None):
-    train_tokens = get_tokenlized(train_text_loc)
+    train_tokens = get_tokenized(train_text_loc)
     if test_text_loc is None:
         test_tokens = list()
     else:
-        test_tokens = get_tokenlized(test_text_loc)
+        test_tokens = get_tokenized(test_text_loc)
     word_set = get_word_list(train_tokens + test_tokens)
     [word_index_dict, index_word_dict] = get_dict(word_set)
 

@@ -8,12 +8,8 @@ from models.seqgan.SeqganDataLoader import DataLoader, DisDataloader
 from models.seqgan.SeqganDiscriminator import Discriminator
 from models.seqgan.SeqganGenerator import Generator
 from models.seqgan.SeqganReward import Reward
-from utils.metrics.Cfg import Cfg
-from utils.metrics.EmbSim import EmbSim
 from utils.metrics.Nll import Nll
-from utils.oracle.OracleCfg import OracleCfg
 from utils.oracle.OracleLstm import OracleLstm
-from utils.text_process import *
 from utils.utils import *
 
 
@@ -115,7 +111,7 @@ class Seqgan(Gan):
 
     def init_real_training(self, data_loc=None):  # TODO: check output
         from utils.text_process import text_precess, text_to_code
-        from utils.text_process import get_tokenlized, get_word_list, get_dict
+        from utils.text_process import get_tokenized, get_word_list, get_dict
         if data_loc is None:
             print(f"Error: Training data not specified.")
             sys.exit(1)
@@ -136,7 +132,7 @@ class Seqgan(Gan):
         dis_dataloader = DisDataloader(batch_size=self.batch_size, seq_length=self.sequence_length)
 
         self.set_data_loader(gen_loader=gen_dataloader, dis_loader=dis_dataloader, oracle_loader=oracle_dataloader)
-        tokens = get_tokenlized(data_loc)
+        tokens = get_tokenized(data_loc)
         word_set = get_word_list(tokens)
         [word_index_dict, index_word_dict] = get_dict(word_set)
 
@@ -159,13 +155,13 @@ class Seqgan(Gan):
 
     def train_real(self, data_loc, model_loc, output_path):
         from utils.text_process import code_to_text
-        from utils.text_process import get_tokenlized
+        from utils.text_process import get_tokenized
         wi_dict, iw_dict = self.init_real_training(data_loc)
         self.init_real_metric()
 
         def get_real_test_file(dict=iw_dict):
             with open(self.generator_file, 'r') as f:
-                codes = get_tokenlized(self.generator_file)
+                codes = get_tokenized(self.generator_file)
             output_dir = os.path.dirname(self.output_path)
 
             if output_dir and not os.path.exists(output_dir):
