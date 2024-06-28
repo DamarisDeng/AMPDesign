@@ -1,0 +1,52 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# PyCharm files
+.idea/
+*.iml
+*.iws
+.idea_modules/
+
+# VS Code files
+.vscode/
+*.code-workspace
+
+# Virtual environment
+venv/
+env/
+.env
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Package files
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# PyBuilder
+target/
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
