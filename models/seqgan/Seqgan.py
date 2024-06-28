@@ -17,6 +17,16 @@ from utils.text_process import *
 from utils.utils import *
 
 
+def transform_file(input_file):
+    input_dir = os.path.dirname(input_file)
+    output_file = os.path.join(input_dir, 'tmp.txt')
+    with open(input_file, 'r') as infile, open(output_file, 'w') as outfile:
+        for line in infile:
+            transformed_line = line.strip().lower()
+            transformed_line = ' '.join(transformed_line)
+            outfile.write(transformed_line + '\n')
+
+
 class Seqgan(Gan):
     def __init__(self, output_path: str):
         super().__init__()
@@ -80,7 +90,7 @@ class Seqgan(Gan):
             return scores
         return super().evaluate()
 
-    def init_oracle_trainng(self, oracle=None):
+    def init_oracle_training(self, oracle=None):
         if oracle is None:
             oracle = OracleLstm(num_vocabulary=self.vocab_size, batch_size=self.batch_size, emb_dim=self.emb_dim,
                                 hidden_dim=self.hidden_dim, sequence_length=self.sequence_length,
@@ -103,12 +113,13 @@ class Seqgan(Gan):
 
         self.set_data_loader(gen_loader=gen_dataloader, dis_loader=dis_dataloader, oracle_loader=oracle_dataloader)
 
-    def init_real_training(self, data_loc=None):  # TODO: output.
+    def init_real_training(self, data_loc=None):  # TODO: check output
         from utils.text_process import text_precess, text_to_code
         from utils.text_process import get_tokenlized, get_word_list, get_dict
         if data_loc is None:
             print(f"Error: Training data not specified.")
             sys.exit(1)
+        transform_file(data_loc)
         self.sequence_length, self.vocab_size = text_precess(data_loc)
         generator = Generator(num_vocabulary=self.vocab_size, batch_size=self.batch_size, emb_dim=self.emb_dim,
                               hidden_dim=self.hidden_dim, sequence_length=self.sequence_length,
@@ -129,10 +140,8 @@ class Seqgan(Gan):
         word_set = get_word_list(tokens)
         [word_index_dict, index_word_dict] = get_dict(word_set)
 
-        # save iw_dict
         with open('save/iw_dict.json', 'w') as file:
             json.dump(index_word_dict, file)
-        print('\niw_dict saved\n')
 
         with open(self.oracle_file, 'w') as outfile:
             outfile.write(text_to_code(tokens, word_index_dict, self.sequence_length))
