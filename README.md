@@ -35,12 +35,16 @@ cd AMPDesign
 The basic usage is
 
 ```bash
-python AMPDesign.py -s <microbial-type> -a model/Ec/ -d train.fasta -o output.fasta
+python AMPDesign.py -s <microbial-type> -a <model-loc> -d <training-data> -o <output-data>
+
+# example
+python AMPDesign.py -s Ec -a prediction/models/Ec/ -d train.txt -o output.txt
 ```
 
 Arguments:
 
-- `-s`: This is used to specify the type of microbial your peptides belong, you can choose from `Ec`, and `Sa`.
-- `-a`: Specifiy the input route.
-- `-o`: Specify the output filename
-- `-d`: the training sequence
+- `-s`: This is used to specify the type of microbial your peptides belong, you can choose from 10 different species, including E. coli (Ec), M. luteus (Ml), K. pneumoniae (Kp), P. aeruginosa (Pa), A. baumannii (Ab), E. feacalis (Ef), S. typhimurium (St), S. aureus (Sa), S. epidermidis (Se), B. subtilis (Bs).
+- `-a`: Specify the path of model. Models can be downloaded from [AMPActiPred website](https://awi.cuhk.edu.cn/~AMPActiPred/download.php).
+- `-o`: Specify the output file path.
+- `-d`: the training sequence. 
+  - The training data should be a .txt file, with each line containing a peptide sequence.
