@@ -5,7 +5,6 @@ import numpy as np
 from prediction.predict_activity import predict_activity
 
 
-
 class Reward(object):
     def __init__(self, lstm, update_rate):
         self.lstm = lstm
@@ -79,7 +78,7 @@ class Reward(object):
         self.gen_x = self.gen_x.stack()  # seq_length x batch_size
         self.gen_x = tf.transpose(self.gen_x, perm=[1, 0])  # batch_size x seq_length
 
-    def get_reward(self, sess, input_x, rollout_num, discriminator): # 为什么把rollout_num设为16
+    def get_reward(self, sess, input_x, rollout_num, discriminator, model_loc):  # 为什么把rollout_num设为16
         rewards = []
         lambda_ = 0.9
         for i in range(rollout_num):
@@ -93,21 +92,19 @@ class Reward(object):
                     rewards.append(ypred)
                 else:
                     rewards[given_num - 1] += ypred
-        
+
             # the last token reward
-            predict_result = predict_activity(input_x)
+            predict_result = predict_activity(input_x, model_loc)
             feed = {discriminator.input_x: input_x}
             ypred_for_auc = sess.run(discriminator.ypred_for_auc, feed)
             np.savetxt('save/ypred_for_auc.txt', ypred_for_auc, fmt='%f')
             np.savetxt('save/predict_result.txt', predict_result, fmt='%f')
-            ypred = lambda_*np.array([item[1] for item in ypred_for_auc])+(1-lambda_)*predict_result # new
-            
-                
+            ypred = lambda_ * np.array([item[1] for item in ypred_for_auc]) + (1 - lambda_) * predict_result  # new
 
             if i == 0:
                 rewards.append(ypred)
             else:
-                rewards[(len(input_x[0])-1)] += ypred
+                rewards[(len(input_x[0]) - 1)] += ypred
             reward_res = np.transpose(np.array(rewards)) / (1.0 * rollout_num)  # batch_size x seq_length
         return reward_res
 
@@ -244,6 +241,7 @@ class Reward(object):
             logits = tf.matmul(hidden_state, self.Wo) + self.bo
             # output = tf.nn.softmax(logits)
             return logits
+
         return unit
 
     def update_params(self):

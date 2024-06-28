@@ -1,4 +1,6 @@
 import json
+import os
+import sys
 from time import time
 
 from models.Gan import Gan
@@ -16,7 +18,7 @@ from utils.utils import *
 
 
 class Seqgan(Gan):
-    def __init__(self, oracle=None):
+    def __init__(self, output_path: str):
         super().__init__()
         # you can change parameters, generator here
         self.vocab_size = 20
@@ -33,7 +35,7 @@ class Seqgan(Gan):
 
         self.oracle_file = 'save/oracle.txt'
         self.generator_file = 'save/generator.txt'
-        self.test_file = 'save/test_file.txt'
+        self.output_path = output_path
 
     def init_metric(self):
         nll = Nll(data_loader=self.oracle_data_loader, rnn=self.oracle, sess=self.sess)
@@ -44,7 +46,8 @@ class Seqgan(Gan):
         self.add_metric(inll)
 
         from utils.metrics.DocEmbSim import DocEmbSim
-        docsim = DocEmbSim(oracle_file=self.oracle_file, generator_file=self.generator_file, num_vocabulary=self.vocab_size)
+        docsim = DocEmbSim(oracle_file=self.oracle_file, generator_file=self.generator_file,
+                           num_vocabulary=self.vocab_size)
         self.add_metric(docsim)
 
     def train_discriminator(self):
@@ -57,7 +60,7 @@ class Seqgan(Gan):
                 self.discriminator.input_x: x_batch,
                 self.discriminator.input_y: y_batch,
             }
-            loss,_ = self.sess.run([self.discriminator.d_loss, self.discriminator.train_op], feed)
+            loss, _ = self.sess.run([self.discriminator.d_loss, self.discriminator.train_op], feed)
             print(loss)
 
     def evaluate(self):
@@ -100,173 +103,12 @@ class Seqgan(Gan):
 
         self.set_data_loader(gen_loader=gen_dataloader, dis_loader=dis_dataloader, oracle_loader=oracle_dataloader)
 
-    def train_oracle(self):
-        self.init_oracle_trainng()
-        self.init_metric()
-        self.sess.run(tf.global_variables_initializer())
-
-        self.pre_epoch_num = 80
-        self.adversarial_epoch_num = 100
-        # experiment
-        # self.pre_epoch_num = 5
-        # self.adversarial_epoch_num = 5
-        self.log = open('experiment-log-seqgan.csv', 'w')
-        generate_samples(self.sess, self.oracle, self.batch_size, self.generate_num, self.oracle_file)
-        generate_samples(self.sess, self.generator, self.batch_size, self.generate_num, self.generator_file)
-        self.gen_data_loader.create_batches(self.oracle_file)
-        self.oracle_data_loader.create_batches(self.generator_file)
-
-        print('start pre-train generator:')
-        for epoch in range(self.pre_epoch_num):
-            start = time()
-            loss = pre_train_epoch(self.sess, self.generator, self.gen_data_loader)
-            end = time()
-            print('epoch:' + str(self.epoch) + '\t time:' + str(end - start))
-            self.add_epoch()
-            if epoch % 5 == 0:
-                generate_samples(self.sess, self.generator, self.batch_size, self.generate_num, self.generator_file)
-                self.evaluate()
-
-        print('start pre-train discriminator:')
-        self.reset_epoch()
-        for epoch in range(self.pre_epoch_num):
-            print('epoch:' + str(epoch))
-            self.train_discriminator()
-
-        self.reset_epoch()
-        print('adversarial training:')
-        self.reward = Reward(self.generator, .8)
-        for epoch in range(self.adversarial_epoch_num):
-            # print('epoch:' + str(epoch))
-            start = time()
-            for index in range(1):
-                samples = self.generator.generate(self.sess)
-                rewards = self.reward.get_reward(self.sess, samples, 16, self.discriminator)
-                feed = {
-                    self.generator.x: samples,
-                    self.generator.rewards: rewards
-                }
-                _ = self.sess.run(self.generator.g_updates, feed_dict=feed)
-            end = time()
-            self.add_epoch()
-            print('epoch:' + str(self.epoch) + '\t time:' + str(end - start))
-            if epoch % 5 == 0 or epoch == self.adversarial_epoch_num - 1:
-                generate_samples(self.sess, self.generator, self.batch_size, self.generate_num, self.generator_file)
-                self.evaluate()
-
-            self.reward.update_params()
-            for _ in range(15):
-                self.train_discriminator()
-
-    def init_cfg_training(self, grammar=None):
-        oracle = OracleCfg(sequence_length=self.sequence_length, cfg_grammar=grammar)
-        self.set_oracle(oracle)
-        self.oracle.generate_oracle()
-        self.vocab_size = self.oracle.vocab_size + 1
-
-        generator = Generator(num_vocabulary=self.vocab_size, batch_size=self.batch_size, emb_dim=self.emb_dim,
-                              hidden_dim=self.hidden_dim, sequence_length=self.sequence_length,
-                              start_token=self.start_token)
-        self.set_generator(generator)
-
-        discriminator = Discriminator(sequence_length=self.sequence_length, num_classes=2, vocab_size=self.vocab_size,
-                                      emd_dim=self.emb_dim, filter_sizes=self.filter_size, num_filters=self.num_filters,
-                                      l2_reg_lambda=self.l2_reg_lambda)
-        self.set_discriminator(discriminator)
-
-        gen_dataloader = DataLoader(batch_size=self.batch_size, seq_length=self.sequence_length)
-        oracle_dataloader = DataLoader(batch_size=self.batch_size, seq_length=self.sequence_length)
-        dis_dataloader = DisDataloader(batch_size=self.batch_size, seq_length=self.sequence_length)
-        self.set_data_loader(gen_loader=gen_dataloader, dis_loader=dis_dataloader, oracle_loader=oracle_dataloader)
-        return oracle.wi_dict, oracle.iw_dict
-
-    def init_cfg_metric(self, grammar=None):
-        cfg = Cfg(test_file=self.test_file, cfg_grammar=grammar)
-        self.add_metric(cfg)
-
-    def train_cfg(self):
-        cfg_grammar = """
-          S -> S PLUS x | S SUB x |  S PROD x | S DIV x | x | '(' S ')'
-          PLUS -> '+'
-          SUB -> '-'
-          PROD -> '*'
-          DIV -> '/'
-          x -> 'x' | 'y'
-        """
-
-        wi_dict_loc, iw_dict_loc = self.init_cfg_training(cfg_grammar)
-        with open(iw_dict_loc, 'r') as file:
-            iw_dict = json.load(file)
-
-        def get_cfg_test_file(dict=iw_dict):
-            with open(self.generator_file, 'r') as file:
-                codes = get_tokenlized(self.generator_file)
-            with open(self.test_file, 'w') as outfile:
-                outfile.write(code_to_text(codes=codes, dictionary=dict))
-
-        self.init_cfg_metric(grammar=cfg_grammar)
-        self.sess.run(tf.global_variables_initializer())
-
-        self.pre_epoch_num = 80
-        self.adversarial_epoch_num = 100
-        # experiment
-        # self.pre_epoch_num = 5
-        # self.adversarial_epoch_num = 5
-        self.log = open('experiment-log-seqgan-cfg.csv', 'w')
-        generate_samples(self.sess, self.generator, self.batch_size, self.generate_num, self.generator_file)
-        self.gen_data_loader.create_batches(self.oracle_file)
-        self.oracle_data_loader.create_batches(self.generator_file)
-        print('start pre-train generator:')
-        for epoch in range(self.pre_epoch_num):
-            start = time()
-            loss = pre_train_epoch(self.sess, self.generator, self.gen_data_loader)
-            end = time()
-            print('epoch:' + str(self.epoch) + '\t time:' + str(end - start))
-            self.add_epoch()
-            if epoch % 5 == 0:
-                generate_samples(self.sess, self.generator, self.batch_size, self.generate_num, self.generator_file)
-                get_cfg_test_file()
-                self.evaluate()
-
-        print('start pre-train discriminator:')
-        self.reset_epoch()
-        for epoch in range(self.pre_epoch_num * 3):
-            print('epoch:' + str(epoch))
-            self.train_discriminator()
-
-        self.reset_epoch()
-        print('adversarial training:')
-        self.reward = Reward(self.generator, .8)
-        for epoch in range(self.adversarial_epoch_num):
-            # print('epoch:' + str(epoch))
-            start = time()
-            for index in range(1):
-                samples = self.generator.generate(self.sess)
-                rewards = self.reward.get_reward(self.sess, samples, 16, self.discriminator)
-                feed = {
-                    self.generator.x: samples,
-                    self.generator.rewards: rewards
-                }
-                loss, _ = self.sess.run([self.generator.g_loss, self.generator.g_updates], feed_dict=feed)
-                print(loss)
-            end = time()
-            self.add_epoch()
-            print('epoch:' + str(self.epoch) + '\t time:' + str(end - start))
-            if epoch % 5 == 0 or epoch == self.adversarial_epoch_num - 1:
-                generate_samples(self.sess, self.generator, self.batch_size, self.generate_num, self.generator_file)
-                get_cfg_test_file()
-                self.evaluate()
-
-            self.reward.update_params()
-            for _ in range(15):
-                self.train_discriminator()
-        return
-
-    def init_real_trainng(self, data_loc=None):
+    def init_real_training(self, data_loc=None):  # TODO: output.
         from utils.text_process import text_precess, text_to_code
         from utils.text_process import get_tokenlized, get_word_list, get_dict
         if data_loc is None:
-            data_loc = 'data/image_coco.txt'
+            print(f"Error: Training data not specified.")
+            sys.exit(1)
         self.sequence_length, self.vocab_size = text_precess(data_loc)
         generator = Generator(num_vocabulary=self.vocab_size, batch_size=self.batch_size, emb_dim=self.emb_dim,
                               hidden_dim=self.hidden_dim, sequence_length=self.sequence_length,
@@ -298,24 +140,29 @@ class Seqgan(Gan):
 
     def init_real_metric(self):
         from utils.metrics.DocEmbSim import DocEmbSim
-        docsim = DocEmbSim(oracle_file=self.oracle_file, generator_file=self.generator_file, num_vocabulary=self.vocab_size)
+        docsim = DocEmbSim(oracle_file=self.oracle_file, generator_file=self.generator_file,
+                           num_vocabulary=self.vocab_size)
         self.add_metric(docsim)
 
         inll = Nll(data_loader=self.gen_data_loader, rnn=self.generator, sess=self.sess)
         inll.set_name('nll-test')
         self.add_metric(inll)
 
-
-    def train_real(self, data_loc=None):
+    def train_real(self, data_loc, model_loc, output_path):
         from utils.text_process import code_to_text
         from utils.text_process import get_tokenlized
-        wi_dict, iw_dict = self.init_real_trainng(data_loc)
+        wi_dict, iw_dict = self.init_real_training(data_loc)
         self.init_real_metric()
 
         def get_real_test_file(dict=iw_dict):
-            with open(self.generator_file, 'r') as file:
+            with open(self.generator_file, 'r') as f:
                 codes = get_tokenlized(self.generator_file)
-            with open(self.test_file, 'w') as outfile:
+            output_dir = os.path.dirname(self.output_path)
+
+            if output_dir and not os.path.exists(output_dir):
+                os.makedirs(output_dir)
+                print(output_dir, 'created.')
+            with open(self.output_path, 'w') as outfile:
                 outfile.write(code_to_text(codes=codes, dictionary=dict))
 
         self.sess.run(tf.global_variables_initializer())
@@ -324,7 +171,7 @@ class Seqgan(Gan):
         self.adversarial_epoch_num = 100
         # experiment
         self.pre_epoch_num = 5
-        # self.adversarial_epoch_num = 5
+        self.adversarial_epoch_num = 5
 
         self.log = open('experiment-log-seqgan-real.csv', 'w')
         generate_samples(self.sess, self.generator, self.batch_size, self.generate_num, self.generator_file)
@@ -352,11 +199,10 @@ class Seqgan(Gan):
         print('adversarial training:')
         self.reward = Reward(self.generator, .8)
         for epoch in range(self.adversarial_epoch_num):
-            # print('epoch:' + str(epoch))
             start = time()
             for index in range(1):
                 samples = self.generator.generate(self.sess)
-                rewards = self.reward.get_reward(self.sess, samples, 16, self.discriminator)
+                rewards = self.reward.get_reward(self.sess, samples, 16, self.discriminator, model_loc)
                 feed = {
                     self.generator.x: samples,
                     self.generator.rewards: rewards,
