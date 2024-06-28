@@ -34,7 +34,7 @@ The basic usage is
 python AMPDesign.py -s <microbial-type> -a <model-loc> -d <training-data> -o <output-data>
 
 # example
-python AMPDesign.py -s Ec -a prediction/models/Ec/ -d train.txt -o output.txt
+python AMPDesign.py -s Ec -a prediction/models/Ec/ -d data/Ec.txt -o save/output.txt
 ```
 
 Arguments:
