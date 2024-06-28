@@ -1,14 +1,26 @@
 # AMPDesign
 
-Antimicrobial resistance poses a threat to human well-being, especially with the emergence of multidrug-resistant bacteria. Antimicrobial peptides (AMPs), as one of the most promising alternatives to traditional antibiotics, have attracted significant attention in recent years. However, designing AMPs using traditional experimental methods is time-consuming and labor-intensive. Therefore, in this study, we propose an out-of-the-box AMP design toolbox, named AMPDesign. 
+Antimicrobial resistance poses a significant threat to global health. AMPs offer a promising alternative to traditional antibiotics, but their design through experimental methods is time-consuming and resource-intensive. Here we proposed AMPDesign, a tool that addresses this challenge by providing a computational approach to AMP design, significantly accelerating the discovery process.
 
-AMPDesign is a novel computational tool designed for the generation of antimicrobial peptide (AMP) sequences. It integrates the Generative Adversarial Network (GAN) architecture and Reinforcement Learning (RL), incorporates our previously developed activity predictor [AMPActiPred](https://onlinelibrary.wiley.com/doi/10.1002/pro.5006) model to produce peptides with high antimicrobial efficacy. Notably, AMPDesign is the first AMP generation toolbox capable of designing AMPs against specific bacterial species.
+## Overview
+![AMPDesign Overview](img.png)
 
-The platform's versatility is demonstrated through its capacity to generate AMPs targeting 10 distinct bacterial species. Researchers can access the comprehensive training datasets and the  prediction model via the [AMPActiPred website](https://awi.cuhk.edu.cn/~AMPActiPred/download.php), facilitating further exploration and application in the field of antimicrobial peptide design.
+AMPDesign is an innovative computational tool for generating antimicrobial peptide (AMP) sequences. It combines Generative Adversarial Network (GAN) architecture with Reinforcement Learning (RL) and incorporates our previously developed [AMPActiPred](https://onlinelibrary.wiley.com/doi/10.1002/pro.5006) model to produce highly effective antimicrobial peptides.
 
-![img.png](img.png)
+### Key Features
 
-## Requirement
+- First AMP generation toolbox capable of designing AMPs against specific bacterial species
+- Generates AMPs targeting 10 distinct bacterial species
+- Integrates GAN architecture and Reinforcement Learning
+- Incorporates AMPActiPred model for high antimicrobial efficacy
+
+## Quick tutorial
+
+```bash
+git clone https://github.com/DamarisDeng/AMPDesign.git
+cd AMPDesign
+```
+### Requirements
 
 We suggest you run the platform under Python 3.7+ with following libs: 
 
@@ -21,13 +33,6 @@ We suggest you run the platform under Python 3.7+ with following libs:
 
 Or just type `pip install -r requirements.txt` in your terminal.
 
-## Quick tutorial
-
-```bash
-git clone https://github.com/DamarisDeng/AMPDesign.git
-cd AMPDesign
-```
-
 The basic usage is
 
 ```bash
@@ -37,12 +42,12 @@ python AMPDesign.py -s <microbial-type> -a <model-loc> -d <training-data> -o <ou
 python AMPDesign.py -s Ec -a prediction/models/Ec/ -d data/Ec.txt -o save/output.txt
 ```
 
-Arguments:
+### Arguments:
 
 - `-s`: This is used to specify the type of microbial your peptides belong, you can choose from 10 different species, including E. coli (Ec), M. luteus (Ml), K. pneumoniae (Kp), P. aeruginosa (Pa), A. baumannii (Ab), E. feacalis (Ef), S. typhimurium (St), S. aureus (Sa), S. epidermidis (Se), B. subtilis (Bs).
-- `-a`: Specify the path of model. Models can be downloaded from [AMPActiPred website](https://awi.cuhk.edu.cn/~AMPActiPred/download.php).
-- `-o`: Specify the output file path.
-- `-d`: the training sequence. 
+- `-a`: Path to the prediction model. Models can be downloaded from [AMPActiPred website](https://awi.cuhk.edu.cn/~AMPActiPred/download.php).
+- `-o`: Output file path.
+- `-d`: Training sequence file path.
   - The training data should be a .txt file, with each line containing a peptide sequence.
 
 ```
@@ -53,3 +58,5 @@ KKAFAAAAAFAAWAAFAKKKK
 AIHKLAHKLTKKTLRAVKKLAN
 GWGDTFGKVLKNFAKVAGVKAAK
 ```
+
+Hope you enjoy using AMPDesign!
