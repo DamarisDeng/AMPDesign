@@ -15,14 +15,14 @@ _AALetter = ['A', 'C', 'D', 'E', 'F', 'G', 'H',
              'I', 'K', 'L', 'M', 'N', 'P', 'Q',
              'R', 'S', 'T', 'V', 'W', 'Y']
 
-
 """
 n_gram statistics
 """
 
-_AALetter = ['A', 'C', 'D', 'E', 'F', 'G', 'H', 
-            'I', 'K', 'L', 'M', 'N', 'P', 'Q', 
-            'R', 'S', 'T', 'V', 'W', 'Y']
+_AALetter = ['A', 'C', 'D', 'E', 'F', 'G', 'H',
+             'I', 'K', 'L', 'M', 'N', 'P', 'Q',
+             'R', 'S', 'T', 'V', 'W', 'Y']
+
 
 def get_aan_corpus(n=2):
     '''
@@ -33,7 +33,7 @@ def get_aan_corpus(n=2):
     if n <= 2:
         for i in _AALetter:
             for j in _AALetter:
-               n_corpus.append("{}{}".format(i, j))
+                n_corpus.append("{}{}".format(i, j))
         return n_corpus
     for i in get_aan_corpus(n - 1):
         for j in _AALetter:
@@ -93,11 +93,13 @@ def generateGroupPairs(groupKey):
     gPair = {}
     for key1 in groupKey:
         for key2 in groupKey:
-            gPair['CKSAAGP|'+key1+'.'+key2] = 0
+            gPair['CKSAAGP|' + key1 + '.' + key2] = 0
     return gPair
+
 
 def minSequenceLength(fastas):
     return min(len(seq) for _, seq in fastas)
+
 
 def generateGroupPairs(groupKeys):
     gPair = {}
@@ -106,12 +108,14 @@ def generateGroupPairs(groupKeys):
             gPair[f'CKSAAGP|{key1}.{key2}'] = 0
     return gPair
 
+
 def cksaagp(fastas, gap=5):
     if gap < 0:
         print('Error: the gap should be equal or greater than zero')
         return []
 
-    group = {'aliphatic': 'GAVLMI', 'aromatic': 'FYW', 'positive_charge': 'KRH', 'negative_charge': 'DE', 'uncharged': 'STCPNQ'}
+    group = {'aliphatic': 'GAVLMI', 'aromatic': 'FYW', 'positive_charge': 'KRH', 'negative_charge': 'DE',
+             'uncharged': 'STCPNQ'}
     AA = 'ARNDCQEGHILKMFPSTWYV'
 
     if minSequenceLength(fastas) < gap + 2:
@@ -153,11 +157,13 @@ def cksaagp(fastas, gap=5):
 
     return encodings
 
+
 """
     input.fasta:      the input protein sequence file in fasta format.
     lambda:           the lambda value, integer, defaule: 30
     output:           the encoding file, default: 'encodings.tsv'
 """
+
 
 def Rvalue(aa1, aa2, AADict, Matrix):
     return sum([(Matrix[i][AADict[aa1]] - Matrix[i][AADict[aa2]]) ** 2 for i in range(len(Matrix))]) / len(Matrix)
@@ -172,8 +178,11 @@ def paac(fastas, lambdaValue=30, w=0.05, **kw):
         records = f.readlines()
     AA = ''.join(records[0].rstrip().split()[1:])
     AADict = {AA[i]: i for i in range(len(AA))}
-    AAProperty = [[float(j) for j in line.rstrip().split()[1:]] if line.rstrip() != '' else None for line in records[1:] if line.rstrip()]
-    AAProperty1 = [(lambda x: [(j - sum(x) / 20) / math.sqrt(sum([(k - sum(x) / 20)**2 for k in x]) / 20) for j in x])(prop) for prop in AAProperty]
+    AAProperty = [[float(j) for j in line.rstrip().split()[1:]] if line.rstrip() != '' else None for line in records[1:]
+                  if line.rstrip()]
+    AAProperty1 = [
+        (lambda x: [(j - sum(x) / 20) / math.sqrt(sum([(k - sum(x) / 20) ** 2 for k in x]) / 20) for j in x])(prop) for
+        prop in AAProperty]
 
     encodings = []
     header = ['#'] + [f'PAAC|{aa}' for aa in AA] + [f'PAAC|lambda{n}' for n in range(1, lambdaValue + 1)]
@@ -186,8 +195,10 @@ def paac(fastas, lambdaValue=30, w=0.05, **kw):
         sequence_length = len(sequence)
         effectiveLambda = min(sequence_length - 1, lambdaValue)
         for n in range(1, effectiveLambda + 1):
-            theta.append(sum(Rvalue(sequence[j], sequence[j + n], AADict, AAProperty1) for j in range(sequence_length - n)) / (sequence_length - n))
-        
+            theta.append(
+                sum(Rvalue(sequence[j], sequence[j + n], AADict, AAProperty1) for j in range(sequence_length - n)) / (
+                        sequence_length - n))
+
         # Append zeros for the missing lambda values if sequence is too short
         # theta += [0] * (lambdaValue - effectiveLambda)
 
@@ -200,128 +211,130 @@ def paac(fastas, lambdaValue=30, w=0.05, **kw):
 
 
 def GAAC(fastas, **kw):
-	group = {
-		'alphatic': 'GAVLMI',
-		'aromatic': 'FYW',
-		'postivecharge': 'KRH',
-		'negativecharge': 'DE',
-		'uncharge': 'STCPNQ'
-	}
+    group = {
+        'alphatic': 'GAVLMI',
+        'aromatic': 'FYW',
+        'positivecharge': 'KRH',
+        'negativecharge': 'DE',
+        'uncharge': 'STCPNQ'
+    }
 
-	groupKey = group.keys()
+    groupKey = group.keys()
 
-	encodings = []
-	header = ['#']
-	for key in groupKey:
-		header.append("GAAC|"+key)
-	encodings.append(header)
+    encodings = []
+    header = ['#']
+    for key in groupKey:
+        header.append("GAAC|" + key)
+    encodings.append(header)
 
-	for i in fastas:
-		name, sequence = i[0], re.sub('-', '', i[1])
-		code = [name]
-		count = Counter(sequence)
-		myDict = {}
-		for key in groupKey:
-			for aa in group[key]:
-				myDict[key] = myDict.get(key, 0) + count[aa]
+    for i in fastas:
+        name, sequence = i[0], re.sub('-', '', i[1])
+        code = [name]
+        count = Counter(sequence)
+        myDict = {}
+        for key in groupKey:
+            for aa in group[key]:
+                myDict[key] = myDict.get(key, 0) + count[aa]
 
-		for key in groupKey:
-			code.append(myDict[key]/len(sequence))
-		encodings.append(code)
+        for key in groupKey:
+            code.append(myDict[key] / len(sequence))
+        encodings.append(code)
 
-	return encodings
+    return encodings
 
 
 def GDPC(fastas, **kw):
-	group = {
-		'alphaticr': 'GAVLMI',
-		'aromatic': 'FYW',
-		'postivecharger': 'KRH',
-		'negativecharger': 'DE',
-		'uncharger': 'STCPNQ'
-	}
+    group = {
+        'alphatic': 'GAVLMI',
+        'aromatic': 'FYW',
+        'postivecharger': 'KRH',
+        'negativecharger': 'DE',
+        'uncharger': 'STCPNQ'
+    }
 
-	groupKey = group.keys()
-	baseNum = len(groupKey)
-	dipeptide = [g1+'.'+g2 for g1 in groupKey for g2 in groupKey]
+    groupKey = group.keys()
+    baseNum = len(groupKey)
+    dipeptide = [g1 + '.' + g2 for g1 in groupKey for g2 in groupKey]
 
-	index = {}
-	for key in groupKey:
-		for aa in group[key]:
-			index[aa] = key
+    index = {}
+    for key in groupKey:
+        for aa in group[key]:
+            index[aa] = key
 
-	encodings = []
-	header = ['#'] + ['GDPC|'+dipname for dipname in dipeptide]
-	encodings.append(header)
+    encodings = []
+    header = ['#'] + ['GDPC|' + dipname for dipname in dipeptide]
+    encodings.append(header)
 
-	for i in fastas:
-		name, sequence = i[0], re.sub('-', '', i[1])
+    for i in fastas:
+        name, sequence = i[0], re.sub('-', '', i[1])
 
-		code = [name]
-		myDict = {}
-		for t in dipeptide:
-			myDict[t] = 0
+        code = [name]
+        myDict = {}
+        for t in dipeptide:
+            myDict[t] = 0
 
-		sum = 0
-		for j in range(len(sequence) - 2 + 1):
-			myDict[index[sequence[j]]+'.'+index[sequence[j+1]]] = myDict[index[sequence[j]]+'.'+index[sequence[j+1]]] + 1
-			sum = sum +1
+        sum = 0
+        for j in range(len(sequence) - 2 + 1):
+            myDict[index[sequence[j]] + '.' + index[sequence[j + 1]]] = myDict[index[sequence[j]] + '.' + index[
+                sequence[j + 1]]] + 1
+            sum = sum + 1
 
-		if sum == 0:
-			for t in dipeptide:
-				code.append(0)
-		else:
-			for t in dipeptide:
-				code.append(myDict[t]/sum)
-		encodings.append(code)
+        if sum == 0:
+            for t in dipeptide:
+                code.append(0)
+        else:
+            for t in dipeptide:
+                code.append(myDict[t] / sum)
+        encodings.append(code)
 
-	return encodings
+    return encodings
 
 
 def GTPC(fastas, **kw):
-	group = {
-		'alphaticr': 'GAVLMI',
-		'aromatic': 'FYW',
-		'postivecharger': 'KRH',
-		'negativecharger': 'DE',
-		'uncharger': 'STCPNQ'
-	}
+    group = {
+        'alphaticr': 'GAVLMI',
+        'aromatic': 'FYW',
+        'postivecharger': 'KRH',
+        'negativecharger': 'DE',
+        'uncharger': 'STCPNQ'
+    }
 
-	groupKey = group.keys()
-	baseNum = len(groupKey)
-	triple = [g1+'.'+g2+'.'+g3 for g1 in groupKey for g2 in groupKey for g3 in groupKey]
+    groupKey = group.keys()
+    baseNum = len(groupKey)
+    triple = [g1 + '.' + g2 + '.' + g3 for g1 in groupKey for g2 in groupKey for g3 in groupKey]
 
-	index = {}
-	for key in groupKey:
-		for aa in group[key]:
-			index[aa] = key
+    index = {}
+    for key in groupKey:
+        for aa in group[key]:
+            index[aa] = key
 
-	encodings = []
-	header = ['#'] + ['GTPC|'+tname for tname in triple]
-	encodings.append(header)
+    encodings = []
+    header = ['#'] + ['GTPC|' + tname for tname in triple]
+    encodings.append(header)
 
-	for i in fastas:
-		name, sequence = i[0], re.sub('-', '', i[1])
+    for i in fastas:
+        name, sequence = i[0], re.sub('-', '', i[1])
 
-		code = [name]
-		myDict = {}
-		for t in triple:
-			myDict[t] = 0
+        code = [name]
+        myDict = {}
+        for t in triple:
+            myDict[t] = 0
 
-		sum = 0
-		for j in range(len(sequence) - 3 + 1):
-			myDict[index[sequence[j]]+'.'+index[sequence[j+1]]+'.'+index[sequence[j+2]]] = myDict[index[sequence[j]]+'.'+index[sequence[j+1]]+'.'+index[sequence[j+2]]] + 1
-			sum = sum +1
+        sum = 0
+        for j in range(len(sequence) - 3 + 1):
+            myDict[index[sequence[j]] + '.' + index[sequence[j + 1]] + '.' + index[sequence[j + 2]]] = myDict[index[sequence[j]] + '.' + index[sequence[j + 1]] + '.' + index[sequence[j + 2]]] + 1
+            sum = sum + 1
 
-		if sum == 0:
-			for t in triple:
-				code.append(0)
-		else:
-			for t in triple:
-				code.append(myDict[t]/sum)
-		encodings.append(code)
+        if sum == 0:
+            for t in triple:
+                code.append(0)
+        else:
+            for t in triple:
+                code.append(myDict[t] / sum)
+        encodings.append(code)
 
-	return encodings
+    return encodings
+
 
 '''
 Insert Iso_electric Point and net_charge(neutral) feature to the sequence data_frame
@@ -332,6 +345,7 @@ Output: data_frame of Peptide Seq {IDx: Seq_x, ..., iep, net_charge}
 
 def insert_phycs(seq_df):
     seq_df = seq_df.copy()
+
     #  Function for compute Isoelectric Point or net_charge of peptide
     def get_ieq_nc(seq, is_iep=True):
         protparam = PA(seq)
@@ -386,8 +400,10 @@ Input: sequence data_frame {IDx: Seq_x}
 Output: data_frame of Peptide Seq {IDx: Seq_x, ..., AAC_Ax ... AAC_Yx}
 '''
 
+
 def insert_aac(seq_df):
     seq_df = seq_df.copy()
+
     # Compute AAC for peptide in specific A.A
     def get_aac(seq, aa):
         if len(seq) == 0:
@@ -431,7 +447,7 @@ def insert_cksaagp(seq_df, gap=2):
     fastas = [[idx, seq] for idx, seq in zip(seq_df['Id'], seq_df['Sequence'])]
     encoding = cksaagp(fastas, gap=gap)
     encoding = pd.DataFrame(encoding[1:], columns=encoding[0])
-    seq_df = pd.concat([seq_df, encoding.iloc[:, 1:]], axis=1) # problem here
+    seq_df = pd.concat([seq_df, encoding.iloc[:, 1:]], axis=1)  # problem here
     return seq_df
 
 
@@ -485,19 +501,20 @@ def construct_features(seq_df, paaclamb=4, paacw=0.5):
     """
     seq_df = insert_aac(seq_df)
     seq_df = insert_ngrams(seq_df, n=2)
-    seq_df = insert_cksaagp(seq_df, gap=3) # As the maximum motif length = 5.
+    seq_df = insert_cksaagp(seq_df, gap=3)  # As the maximum motif length = 5.
     seq_df = insert_paac(seq_df, lamb=paaclamb, w=paacw)
     seq_df = insert_phycs(seq_df)
     return seq_df
 
+
 def convert(seqtext):
     '''Convert sequence from the form "aaaa\nbbbb\ndddd" to a sequence dataframe (capital letter)
     '''
-    seqs = seqtext.split('\n') # space and \n
+    seqs = seqtext.split('\n')  # space and \n
     seqlist = []
     for seq in seqs:
         l = seq.split()
-        seq2 = ''.join(l) # lower
+        seq2 = ''.join(l)  # lower
         seqlist.append(seq2.upper())
         # else:
     seq_df = pd.DataFrame({'Sequence': seqlist})
@@ -505,18 +522,18 @@ def convert(seqtext):
     print(seq_df.head())
     return seq_df
 
-def predict_activity(input_x: np.array, species='Ec'):
+
+def predict_activity(input_x: np.array, model_loc='prediction/model/Ec'):
     '''input: np.array (generated by GAN)
-    This is the main function to be called
     '''
     with open('save/iw_dict.json', 'r') as f:
         iw_dict = json.load(f)
     seqdf = convert(code_to_text(input_x, iw_dict))
-    seqdf['Id'] = seqdf.index # seqdf should have 'Sequence' and 'Id' columns
+    seqdf['Id'] = seqdf.index  # seqdf should have 'Sequence' and 'Id' columns
     seqdf = construct_features(seqdf)
     features = seqdf.iloc[:, 2:].values
     model = CascadeForestRegressor()
-    model.load(f"prediction/model/{species}")
+    model.load(model_loc)
     y_pred = model.predict(features).squeeze()
     np.savetxt('save/y_pred.txt', y_pred, fmt='%f')
     return y_pred

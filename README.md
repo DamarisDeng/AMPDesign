@@ -14,14 +14,12 @@ The platform's versatility is demonstrated through its capacity to generate AMPs
 
 We suggest you run the platform under Python 3.7+ with following libs: 
 
-- TensorFlow 
-- Numpy
-- Scipy
-- NLTK
-- CUDA 7.5+ (Suggested for GPU speed up, not compulsory)
-- deep-forest
-- Biopython
-- 还有什么？
+- TensorFlow == 1.13.1
+- Numpy >= 1.21
+- Scipy >= 1.7.3
+- NLTK == 3.7
+- deep-forest == 0.1.7
+- biopython == 1.81
 
 Or just type `pip install -r requirements.txt` in your terminal.
 

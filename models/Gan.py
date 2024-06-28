@@ -63,7 +63,6 @@ class Gan:
         return scores
 
     def check_valid(self):
-        # TODO
         pass
 
     @abstractmethod
@@ -73,5 +72,5 @@ class Gan:
     def train_cfg(self):
         pass
 
-    def train_real(self):
+    def train_real(self, data_loc, model_loc, output_path):
         pass
