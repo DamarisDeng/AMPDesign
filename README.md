@@ -10,8 +10,6 @@ The platform's versatility is demonstrated through its capacity to generate AMPs
 
 ## Requirement
 
-**查询requirement**
-
 We suggest you run the platform under Python 3.7+ with following libs: 
 
 - TensorFlow == 1.13.1
