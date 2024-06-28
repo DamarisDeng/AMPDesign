@@ -109,7 +109,7 @@ class Seqgan(Gan):
 
         self.set_data_loader(gen_loader=gen_dataloader, dis_loader=dis_dataloader, oracle_loader=oracle_dataloader)
 
-    def init_real_training(self, data_loc=None):  # TODO: check output
+    def init_real_training(self, data_loc=None):
         from utils.text_process import text_precess, text_to_code
         from utils.text_process import get_tokenized, get_word_list, get_dict
         if data_loc is None:
@@ -174,9 +174,6 @@ class Seqgan(Gan):
 
         self.pre_epoch_num = 80
         self.adversarial_epoch_num = 100
-        # experiment
-        self.pre_epoch_num = 5
-        self.adversarial_epoch_num = 5
 
         self.log = open('experiment-log-seqgan-real.csv', 'w')
         generate_samples(self.sess, self.generator, self.batch_size, self.generate_num, self.generator_file)
