@@ -46,3 +46,12 @@ Arguments:
 - `-o`: Specify the output file path.
 - `-d`: the training sequence. 
   - The training data should be a .txt file, with each line containing a peptide sequence.
+
+```
+# sample training data
+AAGMGFFGAR
+AAHCLAIGRR
+KKAFAAAAAFAAWAAFAKKKK
+AIHKLAHKLTKKTLRAVKKLAN
+GWGDTFGKVLKNFAKVAGVKAAK
+```
