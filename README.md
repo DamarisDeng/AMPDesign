@@ -4,9 +4,9 @@ AMPDesign is a tool for users to generate antimicrobial peptide (AMP) sequences.
 
 ## Requirement
 
-查询requirement
+**查询requirement**
 
-We suggest you run the platform under Python 3.7+ with following libs: **查询这个**
+We suggest you run the platform under Python 3.7+ with following libs: 
 
 - TensorFlow 
 - Numpy
@@ -15,6 +15,7 @@ We suggest you run the platform under Python 3.7+ with following libs: **查询�
 - CUDA 7.5+ (Suggested for GPU speed up, not compulsory)
 - deep-forest
 - Biopython
+- 还有什么？
 
 Or just type `pip install -r requirements.txt` in your terminal.
 
@@ -28,7 +29,7 @@ cd AMPDesign
 The basic usage is
 
 ```bash
-python3 AMPDesign.py -s <microbial-type> -a model/Ec/  -o output.fasta -d train.fasta
+python AMPDesign.py -s <microbial-type> -a model/Ec/ -d train.fasta -o output.fasta
 ```
 
 Arguments:
